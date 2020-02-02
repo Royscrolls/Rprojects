@@ -4,7 +4,7 @@ library(Amelia)
 library(ggmap)
 library(qmap)
 library(leaflet)
-df_review <- read.csv("Airbnb_BOS_reviews.csv",stringsAsFactors = FALSE)# comment
+df_review <- read.csv("Airbnb_BOS_reviews.csv",stringsAsFactors = FALSE)
 df_listing <- read.csv("Airbnb_BOS_listings.csv",stringsAsFactors = FALSE)
 str(df_review)
 #removing blanks & nulls from review
