@@ -5,6 +5,7 @@ library(ggmap)
 library(qmap)
 library(leaflet)
 library(ggthemes)
+library(corrgram)
 df_review <- read.csv("Airbnb_BOS_reviews.csv",stringsAsFactors = FALSE)
 df_listing <- read.csv("Airbnb_BOS_listings.csv",stringsAsFactors = FALSE)
 str(df_review)
@@ -43,12 +44,14 @@ table(df_listing$property_type)
 #summarising by groups
 df_list_agg<- df_listing %>%group_by(df_listing$property_type) %>% summarise(n())
 df_agg_2<- aggregate(price~property_type,df_listing,mean)
-df_list_agg <- cbind(df_list_agg, mean= df_agg_2$price)
-df_list_agg<- df_list_agg[-1,]
+df_list_agg <- cbind(df_list_agg, mean= df_agg_2$price) # column binding the aggregate by property type to freq as this woked better than the summarize by mean func
+df_list_agg<- df_list_agg[-1,]  # to remove the first entry of blank property type
+
 print(df_list_agg)
 
+#Demand vs Price Trend by property Types
 #ggplots  --+ facet_grid(Category~.) 
-p1<- ggplot(df_list_agg,aes(x=df_list_agg$mean,y=df_list_agg$`n()`))+ geom_point(aes(color=df_list_agg$`df_listing$property_type`),size=3,alpha=0.6)  + labs(y= "Demand", x = "Average Price of Units")+ggtitle("Price vs Demand in Boston by Property type")+theme_economist_white()
+p1<- ggplot(df_list_agg,aes(x=df_list_agg$mean,y=df_list_agg$`n()`))+ geom_point(aes(color=df_list_agg$`df_listing$property_type`),size=3,alpha=0.6)  + labs(y= "Demand", x = "Average Price of Units")+ggtitle("Demand vs Price Trends in Boston by Property Types")+theme_economist_white()
 print(p1)
 
 #Correlation of Ratings given to Host Information
@@ -61,5 +64,7 @@ df_listing_corr$host_is_superhost<- as.factor(df_listing_corr$host_is_superhost)
 df_listing_corr$host_since<- as.Date(df_listing_corr$host_since,format="%m/%d/%Y")
 df_listing_corr$host_response_rate<- as.numeric(gsub('[%]', '', df_listing_corr$host_response_rate))
 str(df_listing_corr)
+head(df_listing_corr)
 
+print(corrgram(df_listing_corr, method = "color"))
 
