@@ -6,6 +6,8 @@ library(qmap)
 library(leaflet)
 library(ggthemes)
 library(corrgram)
+library(ggalluvial)
+library(ggsci)
 df_review <- read.csv("Airbnb_BOS_reviews.csv",stringsAsFactors = FALSE)
 df_listing <- read.csv("Airbnb_BOS_listings.csv",stringsAsFactors = FALSE)
 str(df_review)
@@ -41,6 +43,7 @@ group_prop <- function(property_type){
 }
 df_listing$property_type <- sapply(df_listing$property_type,group_prop)
 table(df_listing$property_type)
+
 #summarising by groups
 df_list_agg<- df_listing %>%group_by(df_listing$property_type) %>% summarise(n())
 df_agg_2<- aggregate(price~property_type,df_listing,mean)
@@ -56,15 +59,32 @@ print(p1)
 
 #Correlation of Ratings given to Host Information
 str(df_listing)
-df_listing_corr<- df_listing[,c(23,26,27,29,33,35,36,61,77,80)]
+df_listing_corr<- df_listing[,c(23,26,27,29,33,35,36,37,61,77,80,91)]
 str(df_listing_corr)
 df_listing_corr$host_response_time<- as.factor(df_listing_corr$host_response_time) 
 df_listing_corr$host_has_profile_pic<- as.factor(df_listing_corr$host_has_profile_pic) 
+df_listing_corr$host_identity_verified<- as.factor(df_listing_corr$host_identity_verified) 
 df_listing_corr$host_is_superhost<- as.factor(df_listing_corr$host_is_superhost)
 df_listing_corr$host_since<- as.Date(df_listing_corr$host_since,format="%m/%d/%Y")
 df_listing_corr$host_response_rate<- as.numeric(gsub('[%]', '', df_listing_corr$host_response_rate))
+df_listing_corr$cancellation_policy<- as.factor(df_listing_corr$cancellation_policy)
 str(df_listing_corr)
 head(df_listing_corr)
 
 print(corrgram(df_listing_corr, method = "color"))
+# Interestingly the above plot ony gives an idea about the numerical variables and leaves out the categorical ones.
+# Hence we deploy a ggalluvium plot to compare the categorical variables that decide on the factors making a super-host
+df_listing_corr_alluvial<- df_listing_corr %>% group_by(host_response_time,host_identity_verified,host_is_superhost,cancellation_policy) %>% summarise(N=n())
+head(df_listing_corr_alluvial)
+ggplot(data = df_listing_corr_alluvial,
+       aes(axis1 = host_response_time, axis2 = host_identity_verified, axis3 = cancellation_policy,
+           y = N)) +
+  scale_x_discrete(limits = c("response time", "verified identity", "cancellation policy"), expand = c(.1, .05)) +
+  geom_alluvium(aes(fill = host_is_superhost)) +
+  geom_stratum() + geom_text(stat = "stratum", label.strata = TRUE) +
+  theme_minimal() +
+  scale_fill_jama() +
+  theme(legend.position="bottom") +
+  labs( y = "No. listings", title = "Whats makes a superhost",
+        subtitle = "stratified by response time, verified identity, cancellation policy", caption = " ")
 
